@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Square from "./component/Square";
+import Header from "./component/Header";
+import Main from "./component/Main";
 
 function TicTocToe () {
     useEffect(() => {
@@ -43,21 +45,24 @@ function TicTocToe () {
 
     return (
         <div>
-            {result && <label htmlFor="result">{ result }</label>}
-            {!result && <label htmlFor="player">Player { player }</label>}
-            {board.map((row, rowIndex) => 
-                <div key={rowIndex} style={{ display: "flex" }}>
-                {
-                    row.map((col, colIndex) => 
-                        <Square 
-                            value={board[rowIndex][colIndex]} 
-                            onSquareClick={ (e) => onSquareClick(rowIndex, colIndex) }
-                            />
-                    )
-                }
-                </div>
-            )}
-            <button onClick={ handleClear }>Clear</button>
+            <Header />
+            <Main>
+                {result && <label htmlFor="result">{ result }</label>}
+                {!result && <label htmlFor="player">Player { player }</label>}
+                {board.map((row, rowIndex) => 
+                    <div key={rowIndex} className="flex">
+                    {
+                        row.map((col, colIndex) => 
+                            <Square 
+                                value={board[rowIndex][colIndex]} 
+                                onSquareClick={ (e) => onSquareClick(rowIndex, colIndex) }
+                                />
+                        )
+                    }
+                    </div>
+                )}
+                <button onClick={ handleClear }>Clear</button>
+            </Main>
         </div>
     )
 

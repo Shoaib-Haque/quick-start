@@ -1,11 +1,20 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Header from "./component/Header";
+import Main from "./component/Main";
+
 export default function ButtonWorkSeparately() {
+    useEffect(() => {
+        document.title = "Buttons Work Separately";
+    }, [])
     return (
       <div>
-        <h1>Counters that update separately</h1>
-        <MyButton />
-        <MyButton />
+        <Header />
+        <Main> 
+            <h1>Counters that update separately</h1>
+            <MyButton />
+            <MyButton />
+        </Main> 
       </div>
     );
 }

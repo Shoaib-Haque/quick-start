@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom"
-import LandingPage from './pages/LandingPage'
 import DisplayingData from "./pages/DisplayingData"
 import RenderList from "./pages/RenderList"
 import Events from "./pages/RespondingEvents"
@@ -11,8 +10,7 @@ import TicTocToe from "./pages/TicTocToe"
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/home" />}></Route>
-      <Route path="/home" element={<LandingPage />}></Route>
+      <Route path="/" element={<Navigate to="/display-data" />}></Route>
       <Route path="/display-data" element={<DisplayingData />}></Route>
       <Route path="/render-list" element={<RenderList />} ></Route>
       <Route path="/responding-events" element={<Events />}></Route>

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Header from "./component/Header";
+import Main from "./component/Main";
 
 function AlterData() {
     let [fruits, setFruits] = useState([]);
@@ -73,22 +75,26 @@ function AlterData() {
 
     return (
         <div>
-            <input 
-                type="text" 
-                value={ name }
-                onChange={ (e) => setName(e.target.value) }
-                onKeyDown={ handleKeyDown }
-            />
-            <button onClick={add} disabled={ !name.trim() } >{ editButton }</button>
-            <button onClick={clear} >Clear</button>
-            <ul>
-                {fruits.map((fruit) => (
-                    <li key={ fruit.id }>{ fruit.name }
-                        <button onClick={ (e) => edit(fruit.name, fruit.id) }>Edit</button>
-                        <button onClick={ (e) => remove(fruit.id) }>Remove</button>
-                    </li>
-                ))}
-            </ul>
+            <Header />
+            <Main>  
+                <input 
+                    type="text" 
+                    value={ name }
+                    onChange={ (e) => setName(e.target.value) }
+                    onKeyDown={ handleKeyDown }
+                    className="border-1 border-black-600"
+                />
+                <button onClick={add} disabled={ !name.trim() } >{ editButton }</button>
+                <button onClick={clear} >Clear</button>
+                <ul>
+                    {fruits.map((fruit) => (
+                        <li key={ fruit.id }>{ fruit.name }
+                            <button onClick={ (e) => edit(fruit.name, fruit.id) }>Edit</button>
+                            <button onClick={ (e) => remove(fruit.id) }>Remove</button>
+                        </li>
+                    ))}
+                </ul>
+            </Main>
         </div>
     );
 }

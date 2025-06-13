@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Header from "./component/Header";
+import Main from "./component/Main";
 
 function Events() {
     let [age, setAge] = useState("");
@@ -17,13 +19,17 @@ function Events() {
 
     return (
         <div>
-            <button onClick={ handleClick }>Click</button><br></br>
-            <input 
-                type="number" 
-                value={ age } 
-                onChange={ (e) => e.target.value ? setAge(Number(e.target.value)) : setAge("") } 
-            />
-            <button onClick={ () => showName("Shoaib") }>Show Name</button>
+            <Header />
+            <Main> 
+                <button onClick={ handleClick }>Click</button><br></br>
+                <input 
+                    type="number" 
+                    value={ age } 
+                    onChange={ (e) => e.target.value ? setAge(Number(e.target.value)) : setAge("") } 
+                    className="border-1 border-black-600"
+                />
+                <button onClick={ () => showName("Shoaib") }>Show Name</button>
+            </Main> 
         </div>
     );
 }

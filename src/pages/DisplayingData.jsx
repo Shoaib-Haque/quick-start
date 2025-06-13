@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import Header from "./component/Header";
+import Main from "./component/Main";
 
 function DisplayingData() {
     useEffect(() => {
@@ -12,8 +14,11 @@ function DisplayingData() {
 
     return (
         <div>
-            <label htmlFor="name">Name: </label><span>{ user.name }</span><br></br>
-            <label htmlFor="age">Name: </label><span>{ user.age }</span>
+            <Header />
+            <Main> 
+                <label htmlFor="name">Name: </label><span>{ user.name }</span><br></br>
+                <label htmlFor="age">Name: </label><span>{ user.age }</span>
+            </Main> 
         </div>
     );
 }

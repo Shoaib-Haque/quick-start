@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import Header from "./component/Header";
+import Main from "./component/Main";
 
 function RenderList() {
     useEffect(() => {
@@ -15,11 +17,14 @@ function RenderList() {
 
     return (
         <div>
-            <ul>
-                {Products.map((product) => (
-                   <li key={ Products.id }>{ product.name }</li> 
-                ))}
-            </ul>
+            <Header />
+            <Main> 
+                <ul>
+                    {Products.map((product) => (
+                    <li key={ Products.id }>{ product.name }</li> 
+                    ))}
+                </ul>
+            </Main> 
         </div>
     );
 }
