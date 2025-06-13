@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import Header from "./component/Header";
 import Main from "./component/Main";
+import PrimaryButton from "./component/PrimaryButton";
 
-let ButtonWorkTogether = () => {
+let ButtonWorkTogether = ({ headline }) => {
     useEffect(() => {
-        document.title = "Buttons Work Together";
+        document.title = `${headline}`
     }, []);
 
     /* 
@@ -23,8 +24,7 @@ let ButtonWorkTogether = () => {
     return (
         <div>
             <Header />
-            <Main> 
-                <h1>Counters that update together</h1>
+            <Main headline={ headline }> 
                 <MyButton count={count} onClick={handleClick} />
                 <MyButton count={count} onClick={handleClick} />
             </Main> 
@@ -34,7 +34,7 @@ let ButtonWorkTogether = () => {
 
 let MyButton = ({count, onClick}) => {
     return (
-        <button onClick={onClick}>Together clicked {count} times</button>
+        <PrimaryButton text={ `Together Clicked ${count} Times` } onButtonClick={ onClick } classList={ "mr-2" } />
     );
 }
 

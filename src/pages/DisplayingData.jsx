@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import Header from "./component/Header";
 import Main from "./component/Main";
 
-function DisplayingData() {
+function DisplayingData({ headline }) {
     useEffect(() => {
-        document.title = "Display Data"
+        document.title = `${headline}`
     }, []);
 
     const user = {
@@ -15,7 +15,7 @@ function DisplayingData() {
     return (
         <div>
             <Header />
-            <Main> 
+            <Main headline={ headline }> 
                 <label htmlFor="name">Name: </label><span>{ user.name }</span><br></br>
                 <label htmlFor="age">Name: </label><span>{ user.age }</span>
             </Main> 

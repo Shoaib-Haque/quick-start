@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import Header from "./component/Header";
 import Main from "./component/Main";
 
-function RenderList() {
+function RenderList({ headline }) {
     useEffect(() => {
-        document.title = "Render List";
+        document.title = `${headline}`
     }, []);
 
     const Products = [
@@ -18,10 +18,10 @@ function RenderList() {
     return (
         <div>
             <Header />
-            <Main> 
+            <Main headline={ headline }> 
                 <ul>
                     {Products.map((product) => (
-                    <li key={ Products.id }>{ product.name }</li> 
+                        <li key={ product.id }>{ product.name }</li> 
                     ))}
                 </ul>
             </Main> 

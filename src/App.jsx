@@ -7,17 +7,25 @@ import ButtonWorkSeparately from "./pages/ButtonWorkSeparately"
 import ButtonWorkTogether from "./pages/ButtonWorkTogether"
 import TicTocToe from "./pages/TicTocToe"
 
+const routes = [
+  {path: '/', element: DisplayingData, headline: 'Display Data'},
+  {path: '/display-data', element: DisplayingData, headline: 'Display Data'},
+  {path: '/render-list', element: RenderList, headline: 'Render List'},
+  {path: '/responding-events', element: Events, headline: 'Responding Events'},
+  {path: '/alter-data', element: AlterData, headline: 'Alter Data'},
+  {path: '/button-work-separately', element: ButtonWorkSeparately, headline: 'Button Work Separately'},
+  {path: '/button-work-together', element: ButtonWorkTogether, headline: 'Button Work Together'},
+  {path: '/tic-toc-toe', element: TicTocToe, headline: 'Tic Toc Toe'},
+]
+
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/display-data" />}></Route>
-      <Route path="/display-data" element={<DisplayingData />}></Route>
-      <Route path="/render-list" element={<RenderList />} ></Route>
-      <Route path="/responding-events" element={<Events />}></Route>
-      <Route path="/alter-data" element={<AlterData />}></Route>
-      <Route path="/button-work-separately" element={<ButtonWorkSeparately />}></Route>
-      <Route path="/button-work-together" element={<ButtonWorkTogether />}></Route>
-      <Route path="/tic-toc-toe" element={<TicTocToe />}></Route>
+      {
+        routes.map((route) => (
+          <Route path={ route.path } element={<route.element headline={route.headline} />} ></Route>
+        ))
+      }
     </Routes>
   )
 }

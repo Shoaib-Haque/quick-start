@@ -2,15 +2,17 @@ import { useEffect, useState } from "react";
 import Square from "./component/Square";
 import Header from "./component/Header";
 import Main from "./component/Main";
+import PrimaryButton from "./component/PrimaryButton";
 
-function TicTocToe () {
+function TicTocToe ({ headline }) {
     useEffect(() => {
-        document.title = "tic toc toe";
+        document.title = `${headline}`
     }, []);
 
     let [board, setBoard] = useState([['', '', ''], ['', '', ''], ['', '', '']]);
     let [player, setPlayer] = useState(1);
     let [result, setResult] = useState('');
+    let [isClearing, setIsClearing] = useState(false);
 
     let check = (rowIndex, colIndex, curBoard) => {
         const checking = player == 1 ? "X" : "O";
@@ -38,30 +40,38 @@ function TicTocToe () {
     };
 
     let handleClear = () => {
-        setBoard([['', '', ''], ['', '', ''], ['', '', '']]);
-        setPlayer(1);
-        setResult("");
+        setIsClearing(true);
+        setTimeout(() => {
+            setBoard([['', '', ''], ['', '', ''], ['', '', '']]);
+            setPlayer(1);
+            setResult("");
+            setIsClearing(false);
+        }, 1000)
     }
 
     return (
         <div>
             <Header />
-            <Main>
-                {result && <label htmlFor="result">{ result }</label>}
-                {!result && <label htmlFor="player">Player { player }</label>}
-                {board.map((row, rowIndex) => 
-                    <div key={rowIndex} className="flex">
-                    {
-                        row.map((col, colIndex) => 
-                            <Square 
-                                value={board[rowIndex][colIndex]} 
-                                onSquareClick={ (e) => onSquareClick(rowIndex, colIndex) }
-                                />
-                        )
-                    }
-                    </div>
-                )}
-                <button onClick={ handleClear }>Clear</button>
+            <Main headline={ headline }>
+                <div className="mb-4">
+                    {result && <label htmlFor="result">{ result }</label>}
+                    {!result && <label htmlFor="player">Player { player }</label>}
+                </div>
+                <div className="mb-4">
+                    {board.map((row, rowIndex) => 
+                        <div key={rowIndex} className="flex">
+                        {
+                            row.map((col, colIndex) => 
+                                <Square 
+                                    value={board[rowIndex][colIndex]} 
+                                    onSquareClick={ (e) => onSquareClick(rowIndex, colIndex) }
+                                    />
+                            )
+                        }
+                        </div>
+                    )}
+                </div>
+                <PrimaryButton text={ "Clear" } onButtonClick={ handleClear } isButtonDisable={ isClearing } isLoading={ isClearing } />
             </Main>
         </div>
     )

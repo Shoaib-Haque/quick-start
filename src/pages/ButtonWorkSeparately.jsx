@@ -2,16 +2,16 @@
 import { useEffect, useState } from "react";
 import Header from "./component/Header";
 import Main from "./component/Main";
+import PrimaryButton from "./component/PrimaryButton";
 
-export default function ButtonWorkSeparately() {
+export default function ButtonWorkSeparately({ headline }) {
     useEffect(() => {
-        document.title = "Buttons Work Separately";
+        document.title = `${headline}`
     }, [])
     return (
       <div>
         <Header />
-        <Main> 
-            <h1>Counters that update separately</h1>
+        <Main headline={ headline }> 
             <MyButton />
             <MyButton />
         </Main> 
@@ -36,8 +36,6 @@ function MyButton() {
     }
 
     return (
-        <button onClick={handleClick}>
-            Clicked {count} times
-        </button>
+        <PrimaryButton text={ `Clicked ${count} Times` } onButtonClick={ handleClick } classList={ "mr-2" } />
     );
 }
