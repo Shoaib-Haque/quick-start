@@ -12,7 +12,7 @@ const routes = [
   {path: '/display-data', element: DisplayingData, headline: 'Display Data'},
   {path: '/render-list', element: RenderList, headline: 'Render List'},
   {path: '/responding-events', element: Events, headline: 'Responding Events'},
-  {path: '/alter-data', element: AlterData, headline: 'Alter Data'},
+  {path: '/alter-data', element: AlterData, headline: 'Fruit List'},
   {path: '/button-work-separately', element: ButtonWorkSeparately, headline: 'Button Work Separately'},
   {path: '/button-work-together', element: ButtonWorkTogether, headline: 'Button Work Together'},
   {path: '/tic-toc-toe', element: TicTocToe, headline: 'Tic Toc Toe'},

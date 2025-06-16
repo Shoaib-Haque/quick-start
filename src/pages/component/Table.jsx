@@ -1,4 +1,4 @@
-export default function Table({ headings, children }) {
+export default function Table({ headings = [], children }) {
     return (
         <table className="table-auto border border-gray-300 w-full text-sm text-left">
             <thead className="bg-gray-100">
