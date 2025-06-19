@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Header from "./component/Header";
 import Main from "./component/Main";
-import PrimaryButton from "./component/PrimaryButton";
+import Button from "./component/Button";
 
 export default function ButtonWorkSeparately({ headline }) {
     useEffect(() => {
@@ -36,6 +36,6 @@ function MyButton() {
     }
 
     return (
-        <PrimaryButton text={ `Clicked ${count} Times` } onButtonClick={ handleClick } classList={ "mr-2" } />
+        <Button text={ `Clicked ${count} Times` } onButtonClick={ handleClick } classList={ "mr-2" } />
     );
 }

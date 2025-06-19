@@ -13,6 +13,8 @@
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
     "@tailwindcss/postcss": "^4.1.10",
+    "lodash.debounce": "^4.0.8",
+    "lucide-react": "^0.516.0",
     "postcss": "^8.5.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Square from "./component/Square";
 import Header from "./component/Header";
 import Main from "./component/Main";
-import PrimaryButton from "./component/PrimaryButton";
+import Button from "./component/Button";
 
 function TicTocToe ({ headline }) {
     useEffect(() => {
@@ -71,7 +71,7 @@ function TicTocToe ({ headline }) {
                         </div>
                     )}
                 </div>
-                <PrimaryButton text={ "Clear" } onButtonClick={ handleClear } isButtonDisable={ isClearing } isLoading={ isClearing } />
+                <Button text={ "Clear" } onButtonClick={ handleClear } isButtonDisable={ isClearing } isLoading={ isClearing } />
             </Main>
         </div>
     )

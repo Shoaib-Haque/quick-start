@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Header from "./component/Header";
 import Main from "./component/Main";
-import PrimaryButton from "./component/PrimaryButton";
+import Button from "./component/Button";
 
 let ButtonWorkTogether = ({ headline }) => {
     useEffect(() => {
@@ -34,7 +34,7 @@ let ButtonWorkTogether = ({ headline }) => {
 
 let MyButton = ({count, onClick}) => {
     return (
-        <PrimaryButton text={ `Together Clicked ${count} Times` } onButtonClick={ onClick } classList={ "mr-2" } />
+        <Button text={ `Together Clicked ${count} Times` } onButtonClick={ onClick } classList={ "mr-2" } />
     );
 }
 

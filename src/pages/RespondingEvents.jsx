@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Header from "./component/Header";
 import Main from "./component/Main";
-import PrimaryButton from './component/PrimaryButton'
+import Button from './component/Button'
 
 function Events({ headline }) {
     let [age, setAge] = useState("");
@@ -28,8 +28,8 @@ function Events({ headline }) {
                     onChange={ (e) => e.target.value ? setAge(Number(e.target.value)) : setAge("") } 
                     className="border-1 border-black-600"
                 />
-                <PrimaryButton text={ 'Click' } onButtonClick={ handleClick } classList={ "ml-2" } />
-                <PrimaryButton text={ 'Show Name' } onButtonClick={ () => showName("Shoaib") } classList={ "ml-2" } />
+                <Button text={ 'Click' } onButtonClick={ handleClick } classList={ "ml-2" } />
+                <Button text={ 'Show Name' } onButtonClick={ () => showName("Shoaib") } classList={ "ml-2" } />
             </Main> 
         </div>
     );
