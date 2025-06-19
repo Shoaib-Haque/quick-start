@@ -14,17 +14,45 @@ export function sort(items, sorts, sortOrder) {
     return sorted;
 }
 
-export function confirmDialog(title, text, confirmText) {
+export function deleteConfirmDialog({ title = "", text = "", confirmText = "" }) {
     return Swal.fire({
         title,
         text,
-        icon: 'warning',
+        icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
         confirmButtonText: confirmText,
+        allowOutsideClick: false,      // fully disable
+        allowEscapeKey: false,
+        didOpen: () => {
+            // Optionally disable cancel button initially
+            const cancelButton = Swal.getCancelButton();
+            if (cancelButton) {
+                cancelButton.disabled = false;
+            }
+        },
+        preConfirm: () => {
+            const confirmButton = Swal.getConfirmButton();
+            const cancelButton = Swal.getCancelButton();
+
+            // Apply your custom .loading class
+            confirmButton.classList.add('loading');
+
+            // Disable cancel button
+            if (cancelButton) {
+                cancelButton.disabled = true;
+            }
+
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(); // Close the modal after 700ms
+                }, 700);
+            });
+        }
     });
-};
+}
+
 
 export function successDialog(title) {
     Swal.fire({

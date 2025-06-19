@@ -1,16 +1,19 @@
 import { useEffect, useState, useMemo } from "react";
 import { someFruits } from "../assets/data/fruits";
-import { sort, confirmDialog, successDialog, toastWithUndo, exportToCSV } from '../utils/helper';
+import { sort, deleteConfirmDialog, successDialog, toastWithUndo, exportToCSV } from '../utils/helper';
 import debounce from 'lodash.debounce';
 import Header from "./component/Header";
 import Main from "./component/Main";
 import Button from "./component/Button";
 import FormInput from "./component/FormInput";
 import Table from "./component/Table";
+import DataTableRow from "./component/DataTableRow";
 import Pagination from "./component/Pagination";
 import Search from "./component/Search";
 import Modal from "./component/Modal";
+import ExportOptionModal from './component/ExportOptionModal';
 import Nodata from "./component/NoData";
+import { Edit, Trash2 } from "lucide-react";
 
 function AlterData({headline }) {
     const [fruits, setFruits] = useState([]);
@@ -22,11 +25,19 @@ function AlterData({headline }) {
     const [isExporting, setIsExporting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [isRemovingAll, setIsRemovingAll] = useState(false);
-    const headings = ['', 'Name', 'Color', 'Origin', ''];
-    const sortableColumns = [null, 'name', 'color', null, null];
     const isAnyRemoving = fruits.some(fruit => fruit.removing);
     const isBusy = isSaving || isRemovingAll || isAnyRemoving || isExporting;
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const headings = [
+        { label: "", width: "50px" }, // checkbox
+        { label: "Name", width: "minmax(120px, 1fr)" },
+        { label: "Color", width: "minmax(120px, 1fr)" },
+        { label: "Origin", width: "minmax(120px, 1fr)" },
+        { label: "", width: "100px" }, // actions
+    ];
+      
+    const sortableColumns = [null, "name", "color", null, null];
     const [sorts, setSorts] = useState({
         name: null,   // 'asc' | 'desc' | null
         color: null,  // 'asc' | 'desc' | null
@@ -107,6 +118,20 @@ function AlterData({headline }) {
                     fruit.id === editId ? {...fruit, name:trimmedName, color:trimmedColor, origin:trimmedOrigin, justEdited: true } : fruit
                 );
                 setFruits(updatedFruits);
+                // Apply filtering and sorting logic manually (same as in useMemo)
+                const filtered = updatedFruits.filter(fruit => {
+                    if (searchWords.length === 0) return true;
+                    const fields = [fruit.name, fruit.color, fruit.origin].join(' ').toLowerCase();
+                    return searchWords.some(word => fields.includes(word));
+                });
+
+                const sorted = sort(filtered, sorts, ['name', 'color']);
+                const newIndex = sorted.findIndex(fruit => fruit.id === editId);
+                
+                if (newIndex !== -1) {
+                    const newPage = Math.floor(newIndex / itemsPerPage) + 1;
+                    setCurrentPage(newPage);
+                }
                 successDialog("Fruit Edited!");
             
                 setTimeout(() => {
@@ -115,23 +140,39 @@ function AlterData({headline }) {
                     );
                 }, 1000);
             } else {
-                let latest_id = Math.max(0, ...fruits.map(f => f.id)) + 1;
-                let newFruit = {
-                    id: latest_id,
+                const latestId = Math.max(0, ...fruits.map(f => f.id)) + 1;
+                const newFruit = {
+                    id: latestId,
                     name: trimmedName,
                     color: trimmedColor,
                     origin: trimmedOrigin,
                     selected: false,
                     justAdded: true,
                 };
-                setFruits((prev) => [...prev, newFruit]);
-                successDialog("Fruit Added!");
+
+                const newFruits = [...fruits, newFruit];
+                setFruits(newFruits);
+                const filtered = newFruits.filter(fruit => {
+                    if (searchWords.length === 0) return true;
+                    const fields = [fruit.name, fruit.color, fruit.origin].join(' ').toLowerCase();
+                    return searchWords.some(word => fields.includes(word));
+                });
+
+                const sorted = sort(filtered, sorts, ['name', 'color']);
+                const newIndex = sorted.findIndex(fruit => fruit.id === latestId);
                 
-                // Remove the justAdded flag after animation duration
+                if (newIndex !== -1) {
+                    const newPage = Math.floor(newIndex / itemsPerPage) + 1;
+                    setCurrentPage(newPage);
+                }
+
+                successDialog("Fruit Added!");
+
+                // Remove justAdded flag after animation
                 setTimeout(() => {
-                setFruits((prev) =>
-                    prev.map((f) => (f.id === latest_id ? {...f, justAdded: false } : f))
-                );
+                    setFruits((prev) =>
+                        prev.map((f) => (f.id === latestId ? { ...f, justAdded: false } : f))
+                    );
                 }, 1000);
             }
             clear();
@@ -172,18 +213,20 @@ function AlterData({headline }) {
         const itemToDelete = fruits.find(fruit => fruit.id === id);
         if (!itemToDelete) return;
     
-        confirmDialog('Are you sure?', 'This action cannot be undone!', 'Yes, delete it!')
-        .then((result) => {
+        deleteConfirmDialog({
+            title: "Are you sure?",
+            confirmText: "Yes, delete it!"
+        }).then((result) => {
             if (result.isConfirmed) {
-                // Optionally mark for animation
+                // Mark item as removing to show loading icon in button
                 setFruits(prev => 
-                    prev.map(fruit => fruit.id === id ? {...fruit, removing: true } : fruit)
+                    prev.map(fruit => fruit.id === id ? { ...fruit, removing: true } : fruit)
                 );
     
                 // Wait for animation, then delete
                 setTimeout(() => {
                     deleteItems([itemToDelete]);
-                }, 700); // should match animation duration
+                }, 500); // match your CSS animation
             }
         });
     };
@@ -192,12 +235,10 @@ function AlterData({headline }) {
         const itemsToDelete = fruits.filter(fruit => fruit.selected);
         if (itemsToDelete.length === 0) return;
     
-        confirmDialog('Are you sure?', 'This action cannot be undone!', 'Yes, delete selected items!')
+        deleteConfirmDialog({title: 'Are you sure?', confirmText: 'Yes, delete selected items!'})
         .then((result) => {
             if (result.isConfirmed) {
                 setIsRemovingAll(true);
-    
-                // Optional: show "removing" animation
                 setFruits(prev =>
                     prev.map(fruit =>
                         fruit.selected ? {...fruit, removing: true } : fruit
@@ -208,7 +249,7 @@ function AlterData({headline }) {
                 setTimeout(() => {
                     deleteItems(itemsToDelete);
                     setIsRemovingAll(false);
-                }, 700); // match your CSS animation
+                }, 500); // match your CSS animation
             }
         });
     };
@@ -279,30 +320,115 @@ function AlterData({headline }) {
         setItemsPerPage(Number(e.target.value));
     };
 
-    const columns = [
+    const cells = [
         { label: "Id", key: "id" },
         { label: "Name", key: "name" },
         { label: "Color", key: "color" },
         { label: "Origin", key: "origin" },
     ];
+
+    const handleExportClick = () => {
+        setIsExportModalOpen(true);
+    };
       
-    const handleExport = () => {
+    const handleExport = (type) => {
+        setIsExportModalOpen(false);
         setIsExporting(true);
+      
         setTimeout(() => {
+          let exportData = [];
+      
+          if (type === "search") {
+            exportData = filteredFruits;
+          } else if (type === "page") {
+            exportData = paginatedFruits;
+          } else if (type === "selected") {
+            exportData = fruits.filter((f) => f.selected);
+          }
+      
+          if (exportData.length === 0) {
+            alert("No data to export.");
+          } else {
             exportToCSV({
-                data: filteredFruits,
-                filename: "fruits.csv",
-                columns,
+              data: exportData,
+              filename: `fruits-${type}.csv`,
+              columns: cells,
             });
-            setIsExporting(false);
+          }
+      
+          setIsExporting(false);
         }, 2000);
     };
+      
 
     const getRemoveButtonText = () => {
         return selectedCount > 0 
         ? `Remove ${selectedCount} item${selectedCount > 1 ? 's' : ''}`
         : "Remove Selected"
     }
+
+    const columns = [
+        {
+          key: "select",
+          width: "50px",
+          isCheckbox: true, // special flag for checkbox column
+        },
+        {
+          key: "name",
+          width: "minmax(120px, 1fr)",
+        },
+        {
+          key: "color",
+          width: "minmax(120px, 1fr)",
+        },
+        {
+          key: "origin",
+          width: "minmax(120px, 1fr)",
+        },
+        {
+          key: "actions",
+          width: "100px",
+          isActions: true,
+          render: (fruit, { onEdit, onRemove, isBusy }) => (
+            <>
+              <Button
+                ariaLabel="Edit"
+                onButtonClick={() => onEdit(fruit.id, fruit.name, fruit.color, fruit.origin)}
+                isButtonDisable={isBusy}
+                title="Edit"
+                bgColor="gray"
+                variant="icon"
+              >
+                <Edit className="w-5 h-5" />
+              </Button>
+              <Button
+                ariaLabel="Remove"
+                onButtonClick={() => onRemove(fruit.id)}
+                isButtonDisable={isBusy}
+                bgColor="red"
+                variant="icon"
+                classList="ml-2"
+                title="Remove"
+              >
+                <Trash2 className="w-5 h-5" />
+              </Button>
+            </>
+          ),
+        },
+    ];
+    
+    // Handlers to pass to DataTableRow
+    const handlers = {
+        onSelect: selectItem,
+        onEdit: edit,
+        onRemove: remove,
+        isBusy,
+    };
+
+    // Row rendering function for Table
+    const renderRow = (fruit) => (
+        <DataTableRow key={fruit.id} item={fruit} columns={columns} handlers={handlers} isBusy={isBusy} />
+    );
 
     return (
         <div>
@@ -318,10 +444,17 @@ function AlterData({headline }) {
                         <Button 
                             text={"Export as CSV"} 
                             ariaLabel={"Export as CSV"} 
-                            onButtonClick={handleExport} 
+                            onButtonClick={handleExportClick} 
                             bgColor={"gray"}
-                            isButtonDisable={isBusy} 
-                            isLoading={isExporting} 
+                            isButtonDisable={!filteredFruits.length || isBusy}
+                            isLoading={isExporting}
+                        />
+                        <ExportOptionModal 
+                            isOpen={isExportModalOpen}
+                            onClose={() => setIsExportModalOpen(false)}
+                            onExport={handleExport}
+                            isBusy={isBusy}
+                            hasSelectedItems={selectedCount > 0}
                         />
                         <Button 
                             text={"Add Fruit"} 
@@ -414,70 +547,24 @@ function AlterData({headline }) {
                                 />
                                 <Button 
                                     text={getRemoveButtonText()}
+                                    title={!selectedCount ? 'Select to Remove' : ''}
                                     ariaLabel={getRemoveButtonText()}
                                     onButtonClick={() => removeSelected()}
                                     isButtonDisable={!selectedCount || isBusy}
-                                    isLoading={isRemovingAll} 
                                     bgColor={"red"}
                                     classList="min-w-[155px]"
                                 />
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto mb-2">
-                            <Table 
-                                headings={headings}
-                                sortableColumns={sortableColumns}
-                                onSortClick={toggleSortField}
-                                sorts={sorts}
-                            >
-                                <tbody>
-                                    {paginatedFruits.map((fruit) => (
-                                        <tr 
-                                            key={fruit.id}
-                                            className={`
-                                                transition-all duration-700 ease-in-out
-                                                ${fruit.justAdded ? 'bg-green-100 animate-pulse' : ''}
-                                                ${fruit.justEdited ? 'bg-yellow-100 animate-pulse' : ''}
-                                                ${fruit.removing ? 'bg-red-200 animate-pulse' : ''}
-                                              `} 
-                                        >
-                                            <td className="border border-gray-300 px-4 py-2 w-[50px]">
-                                                <input 
-                                                    type="checkbox"
-                                                    title={fruit.selected ? "Deselect" : "Select"}
-                                                    aria-label={fruit.selected ? `Deselect ${fruit.name}` : `Select ${fruit.name}`}
-                                                    checked={fruit.selected}
-                                                    disabled={isBusy}
-                                                    onChange={() => selectItem(fruit.id)} 
-                                                    className={isBusy ? "opacity-50 !cursor-not-allowed" : "!cursor-pointer"} 
-                                                />
-                                            </td>
-                                            <td className="border border-gray-300 px-4 py-2 whitespace-nowrap">{fruit.name}</td>
-                                            <td className="border border-gray-300 px-4 py-2 whitespace-nowrap">{fruit.color}</td>
-                                            <td className="border border-gray-300 px-4 py-2 whitespace-nowrap">{fruit.origin}</td>
-                                            <td className="border border-gray-300 px-4 py-2 whitespace-nowrap w-[170px]">
-                                                <Button 
-                                                    text={"Edit"} 
-                                                    ariaLabel={"Edit"} 
-                                                    onButtonClick={() => edit(fruit.id, fruit.name, fruit.color, fruit.origin)} 
-                                                    isButtonDisable={isBusy} 
-                                                />
-                                                <Button 
-                                                    text={"Remove"} 
-                                                    ariaLabel={"Remove"} 
-                                                    onButtonClick={() => remove(fruit.id)} 
-                                                    isButtonDisable={isBusy} 
-                                                    isLoading={fruit.removing ?? false}
-                                                    bgColor={"red"}
-                                                    classList={"ml-2"} 
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </Table>
-                        </div>
+                        <Table
+                            headings={headings}
+                            sortableColumns={sortableColumns}
+                            onSortClick={toggleSortField}
+                            sorts={sorts}
+                            data={paginatedFruits}
+                            renderRow={renderRow}
+                        />
                     </div>
                 ) : (
                     <Nodata />
