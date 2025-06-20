@@ -20,7 +20,8 @@ export default function Modal({ isOpen, onClose, headline = "", children, isButt
                 <button
                     disabled={isButtonDisable}
                     onClick={onClose}
-                    className={`absolute top-3 right-3 text-gray-500 hover:text-black text-2xl font-bold ${isButtonDisable ? 'opacity-50 !cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                    title="Close"
+                    className={`absolute top-3 right-3 text-gray-500 hover:text-black text-2xl font-bold ${isButtonDisable ? 'opacity-50 !cursor-not-allowed' : 'hover:text-gray-700'}`}
                 >
                     <X size={20} />
                 </button>

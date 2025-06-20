@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { someFruits } from "../assets/data/fruits";
-import { sort, deleteConfirmDialog, successDialog, toastWithUndo, exportToCSV } from '../utils/helper';
+import { helperAddSelectionFlag, helperSort, helperDeleteConfirmDialog, helperSuccessDialog, helperToastWithUndo, helperExportToCSV, helperGetSearchWords, helperFilterItems, helperPaginateItems, helperSaveAndReposition, helperRemoveTemporaryFlag } from '../utils/helper';
 import debounce from 'lodash.debounce';
 import Header from "./component/Header";
 import Main from "./component/Main";
@@ -15,15 +15,15 @@ import ExportOptionModal from './component/ExportOptionModal';
 import Nodata from "./component/NoData";
 import { Edit, Trash2 } from "lucide-react";
 
-function AlterData({headline }) {
+function AlterData({headline}) {
     const [fruits, setFruits] = useState([]);
     const [name, setName] = useState("");
     const [color, setColor] = useState("");
     const [origin, setOrigin] = useState("");
     const [editId, setEditId] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
     const [isRemovingAll, setIsRemovingAll] = useState(false);
     const isAnyRemoving = fruits.some(fruit => fruit.removing);
     const isBusy = isSaving || isRemovingAll || isAnyRemoving || isExporting;
@@ -36,7 +36,6 @@ function AlterData({headline }) {
         { label: "Origin", width: "minmax(120px, 1fr)" },
         { label: "", width: "100px" }, // actions
     ];
-      
     const sortableColumns = [null, "name", "color", null, null];
     const [sorts, setSorts] = useState({
         name: null,   // 'asc' | 'desc' | null
@@ -47,35 +46,41 @@ function AlterData({headline }) {
     const [lastDeletedItems, setLastDeletedItems] = useState([]);
     const [errors, setErrors] = useState({});
 
+    // Only runs when the component mounts. 
     useEffect(() => {
         document.title = `${headline}`;        
-        setFruits(someFruits);
+        setFruits(helperAddSelectionFlag({items: someFruits}));
     }, []);
 
-    const searchWords = useMemo(() => {
-        return searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    }, [searchTerm]);
+    /* 
+    useMemo is a React hook that:
+
+    Caches the result of a computation,
+    Only recomputes when its dependencies change,
+    Helps optimize performance, especially for expensive calculations.
+    */
+
+    // Only updates when searchTerm changes
+    const searchWords = useMemo(() => 
+        helperGetSearchWords({searchTerm: searchTerm}), 
+    [searchTerm]);
     
-    const filteredFruits = useMemo(() => {
-        return fruits.filter(fruit => {
-            if (searchWords.length === 0) return true;
-            const fields = [fruit.name, fruit.color, fruit.origin].join(' ').toLowerCase();
-            return searchWords.some(word => fields.includes(word));
-        });
-    }, [fruits, searchWords]);
+    // Updates → When either fruits or searchWords changes.
+    const filteredFruits = useMemo(() => 
+        helperFilterItems({items: fruits, searchWords: searchWords, fieldsToSearch: ['name', 'color', 'origin']}),
+    [fruits, searchWords]);
     
+    // Updates → When filtered results or sort rules change.
     const sortedFruits = useMemo(() => {
-        return sort(filteredFruits, sorts, ['name', 'color']);
+        return helperSort({items: filteredFruits, sorts: sorts, sortOrder: ['name', 'color']});
     }, [filteredFruits, sorts]);
     
-    const paginatedFruits = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return sortedFruits.slice(startIndex, startIndex + itemsPerPage);
-    }, [sortedFruits, currentPage, itemsPerPage]);
+    // Updates → When sorting changes, page changes, or page size changes.
+    const paginatedFruits = useMemo(() => 
+        helperPaginateItems({items: sortedFruits, currentPage: currentPage, itemsPerPage: itemsPerPage}),
+    [sortedFruits, currentPage, itemsPerPage]);
 
-    const hasSelectableItems = paginatedFruits.some(f => !f.removing);
-    const selectedCount = fruits.filter(fruit => fruit.selected).length;
-    
+    // Runs every time filteredFruits or itemsPerPage changes.
     useEffect(() => {
         const totalPages = Math.ceil(filteredFruits.length / itemsPerPage);
         if (currentPage > totalPages && totalPages > 0) {
@@ -84,102 +89,81 @@ function AlterData({headline }) {
         
     }, [filteredFruits, itemsPerPage]);
 
+    // checks if there is at least one item on the current page (paginatedFruits) that is not being removed.
+    const hasSelectableItems = paginatedFruits.some(f => !f.removing); 
+    // Check the full list
+    const selectedCount = fruits.filter(fruit => fruit.selected).length;
+
     const save = () => {
-        let trimmedName = name.trim();
-        let trimmedColor = color.trim();
-        let trimmedOrigin = origin.trim();
-
+        const trimmedName = name.trim();
+        const trimmedColor = color.trim();
+        const trimmedOrigin = origin.trim();
+      
         const newErrors = {};
-
         if (!trimmedName) {
-            newErrors.name = "Name is required!";
-        } else if (fruits.some(fruit =>
-            fruit.name.toLowerCase() === trimmedName.toLowerCase() &&
-            fruit.id !== editId
-        )) {
-            newErrors.name = "Name already exists!";
+          newErrors.name = "Name is required!";
+        } else if (
+          fruits.some(
+            (fruit) =>
+              fruit.name.toLowerCase() === trimmedName.toLowerCase() &&
+              fruit.id !== editId
+          )
+        ) {
+          newErrors.name = "Name already exists!";
         }
-
-        if (!trimmedColor) {
-            newErrors.color = "Color is required!";
-        }
-
+      
+        if (!trimmedColor) newErrors.color = "Color is required!";
         if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }    
-
-        // Clear errors if all good
+          setErrors(newErrors);
+          return;
+        }
+      
         setErrors({});
         setIsSaving(true);
+      
         setTimeout(() => {
-            if(editId) {
-                let updatedFruits = fruits.map((fruit) =>
-                    fruit.id === editId ? {...fruit, name:trimmedName, color:trimmedColor, origin:trimmedOrigin, justEdited: true } : fruit
-                );
-                setFruits(updatedFruits);
-                // Apply filtering and sorting logic manually (same as in useMemo)
-                const filtered = updatedFruits.filter(fruit => {
-                    if (searchWords.length === 0) return true;
-                    const fields = [fruit.name, fruit.color, fruit.origin].join(' ').toLowerCase();
-                    return searchWords.some(word => fields.includes(word));
-                });
-
-                const sorted = sort(filtered, sorts, ['name', 'color']);
-                const newIndex = sorted.findIndex(fruit => fruit.id === editId);
-                
-                if (newIndex !== -1) {
-                    const newPage = Math.floor(newIndex / itemsPerPage) + 1;
-                    setCurrentPage(newPage);
-                }
-                successDialog("Fruit Edited!");
-            
-                setTimeout(() => {
-                    setFruits((prev) =>
-                        prev.map((f) => (f.id === editId ? {...f, justEdited: false } : f))
-                    );
-                }, 1000);
-            } else {
-                const latestId = Math.max(0, ...fruits.map(f => f.id)) + 1;
-                const newFruit = {
-                    id: latestId,
-                    name: trimmedName,
-                    color: trimmedColor,
-                    origin: trimmedOrigin,
-                    selected: false,
-                    justAdded: true,
-                };
-
-                const newFruits = [...fruits, newFruit];
-                setFruits(newFruits);
-                const filtered = newFruits.filter(fruit => {
-                    if (searchWords.length === 0) return true;
-                    const fields = [fruit.name, fruit.color, fruit.origin].join(' ').toLowerCase();
-                    return searchWords.some(word => fields.includes(word));
-                });
-
-                const sorted = sort(filtered, sorts, ['name', 'color']);
-                const newIndex = sorted.findIndex(fruit => fruit.id === latestId);
-                
-                if (newIndex !== -1) {
-                    const newPage = Math.floor(newIndex / itemsPerPage) + 1;
-                    setCurrentPage(newPage);
-                }
-
-                successDialog("Fruit Added!");
-
-                // Remove justAdded flag after animation
-                setTimeout(() => {
-                    setFruits((prev) =>
-                        prev.map((f) => (f.id === latestId ? { ...f, justAdded: false } : f))
-                    );
-                }, 1000);
-            }
-            clear();
-            setIsSaving(false);
-            setIsModalOpen(false);
+          const latestId = Math.max(0, ...fruits.map((f) => f.id)) + 1;
+          const id = editId || latestId;
+      
+          const newFruit = {
+            id,
+            name: trimmedName,
+            color: trimmedColor,
+            origin: trimmedOrigin,
+            selected: false,
+            ...(editId ? { justEdited: true } : { justAdded: true }),
+          };
+      
+          // 🧠 Reuse helper
+          helperSaveAndReposition({
+            items: fruits,
+            newItem: newFruit,
+            editId,
+            searchWords,
+            sorts,
+            itemsPerPage,
+            setItems: setFruits,
+            setCurrentPage,
+            fieldsToSearch: ['name', 'color', 'origin'],
+            sortOrder: ['name', 'color'],
+          });
+      
+          helperSuccessDialog({ title: editId ? "Fruit Edited!" : "Fruit Added!" });
+      
+          // Clean up justEdited/justAdded flag
+          helperRemoveTemporaryFlag({
+            setItems: setFruits,
+            id,
+            flag: editId ? "justEdited" : "justAdded",
+          });
+      
+          clear();
+          setIsSaving(false);
+          setIsModalOpen(false);
         }, 2000);
-    };
+      };
+      
+      
 
     const edit = (id, name, color, origin) => {
         setEditId(id);
@@ -196,7 +180,7 @@ function AlterData({headline }) {
         setFruits(prev => prev.filter(fruit => !itemsToDelete.some(del => del.id === fruit.id)));
         setLastDeletedItems(itemsToDelete);
 
-        toastWithUndo({
+        helperToastWithUndo({
             message: `${itemsToDelete.length} item(s) deleted`,
             onUndo: () => {
             setFruits(prev => [...prev, ...itemsToDelete].sort((a, b) => a.id - b.id));
@@ -213,7 +197,7 @@ function AlterData({headline }) {
         const itemToDelete = fruits.find(fruit => fruit.id === id);
         if (!itemToDelete) return;
     
-        deleteConfirmDialog({
+        helperDeleteConfirmDialog({
             title: "Are you sure?",
             confirmText: "Yes, delete it!"
         }).then((result) => {
@@ -235,7 +219,7 @@ function AlterData({headline }) {
         const itemsToDelete = fruits.filter(fruit => fruit.selected);
         if (itemsToDelete.length === 0) return;
     
-        deleteConfirmDialog({title: 'Are you sure?', confirmText: 'Yes, delete selected items!'})
+        helperDeleteConfirmDialog({title: 'Are you sure?', confirmText: 'Yes, delete selected items!'})
         .then((result) => {
             if (result.isConfirmed) {
                 setIsRemovingAll(true);
@@ -320,7 +304,7 @@ function AlterData({headline }) {
         setItemsPerPage(Number(e.target.value));
     };
 
-    const cells = [
+    const exportColumns = [
         { label: "Id", key: "id" },
         { label: "Name", key: "name" },
         { label: "Color", key: "color" },
@@ -349,10 +333,10 @@ function AlterData({headline }) {
           if (exportData.length === 0) {
             alert("No data to export.");
           } else {
-            exportToCSV({
+            helperExportToCSV({
               data: exportData,
               filename: `fruits-${type}.csv`,
-              columns: cells,
+              columns: exportColumns,
             });
           }
       
@@ -444,6 +428,7 @@ function AlterData({headline }) {
                         <Button 
                             text={"Export as CSV"} 
                             ariaLabel={"Export as CSV"} 
+                            title={!filteredFruits.length ? "No Data To Export" : ''}
                             onButtonClick={handleExportClick} 
                             bgColor={"gray"}
                             isButtonDisable={!filteredFruits.length || isBusy}
@@ -503,12 +488,14 @@ function AlterData({headline }) {
                                         onButtonClick={save} 
                                         isButtonDisable={isBusy} 
                                         isLoading={isSaving} 
+                                        bgColor={"green"}
                                     />
                                     <Button 
                                         text={"Clear"} 
                                         ariaLabel={"Clear"}
                                         onButtonClick={clear} 
                                         isButtonDisable={isBusy}
+                                        bgColor={"red"}
                                     />
                                 </div>
                             </form>
