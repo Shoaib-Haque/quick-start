@@ -2,8 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { someFruits } from "../assets/data/fruits";
 import { helperAddSelectionFlag, helperSort, helperDeleteConfirmDialog, helperSuccessDialog, helperToastWithUndo, helperExportToCSV, helperGetSearchWords, helperFilterItems, helperPaginateItems, helperSaveAndReposition, helperRemoveTemporaryFlag } from '../utils/helper';
 import debounce from 'lodash.debounce';
-import Header from "./component/Header";
-import Main from "./component/Main";
+import Layout from "./component/Layout";
 import Button from "./component/Button";
 import FormInput from "./component/FormInput";
 import Table from "./component/Table";
@@ -15,7 +14,7 @@ import ExportOptionModal from './component/ExportOptionModal';
 import Nodata from "./component/NoData";
 import { Edit, Trash2 } from "lucide-react";
 
-function AlterData({headline}) {
+function Fruits({headline}) {
     const [fruits, setFruits] = useState([]);
     const [name, setName] = useState("");
     const [color, setColor] = useState("");
@@ -415,150 +414,147 @@ function AlterData({headline}) {
     );
 
     return (
-        <div>
-            <Header />
-            <Main headline={headline}>  
-                <div className="flex flex-col-reverse sm:flex-row gap-2 justify-between mb-4">
-                    <Search 
-                        placeholder={"Search Fruits.."}
-                        searchByKey={(e) => debouncedSearch(e.target.value)}
-                        isBusy={isBusy} 
+        <Layout headline={headline}>
+            <div className="flex flex-col-reverse sm:flex-row gap-2 justify-between mb-4">
+                <Search 
+                    placeholder={"Search Fruits.."}
+                    searchByKey={(e) => debouncedSearch(e.target.value)}
+                    isBusy={isBusy} 
+                />
+                <div className="flex justify-end gap-2">
+                    <Button 
+                        text={"Export as CSV"} 
+                        ariaLabel={"Export as CSV"} 
+                        title={!filteredFruits.length ? "No Data To Export" : ''}
+                        onButtonClick={handleExportClick} 
+                        bgColor={"gray"}
+                        isButtonDisable={!filteredFruits.length || isBusy}
+                        isLoading={isExporting}
                     />
-                    <div className="flex justify-end gap-2">
-                        <Button 
-                            text={"Export as CSV"} 
-                            ariaLabel={"Export as CSV"} 
-                            title={!filteredFruits.length ? "No Data To Export" : ''}
-                            onButtonClick={handleExportClick} 
-                            bgColor={"gray"}
-                            isButtonDisable={!filteredFruits.length || isBusy}
-                            isLoading={isExporting}
-                        />
-                        <ExportOptionModal 
-                            isOpen={isExportModalOpen}
-                            onClose={() => setIsExportModalOpen(false)}
-                            onExport={handleExport}
-                            isBusy={isBusy}
-                            hasSelectedItems={selectedCount > 0}
-                        />
-                        <Button 
-                            text={"Add Fruit"} 
-                            ariaLabel={"Add Fruit"} 
-                            onButtonClick={handleOpenModal} 
-                            isButtonDisable={isBusy} 
-                        />
-                    </div>
-                    <Modal
-                        isOpen={isModalOpen}
-                        isButtonDisable={isSaving}
-                        headline={editId ? 'Edit Fruit' : 'Add New Fruit'}
-                        onClose={handleCloseModal} >
-                            <form
-                                onSubmit={(e) => {
-                                e.preventDefault();
-                                save();
-                                }}
-                                className="flex flex-col gap-2"
-                            >
-                                <FormInput 
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="* Enter Name"
-                                    error={errors.name}
-                                    disabled={isBusy}
-                                />
-                                <FormInput 
-                                    value={color}
-                                    onChange={(e) => setColor(e.target.value)}
-                                    placeholder="* Enter Color"
-                                    error={errors.color}
-                                    disabled={isBusy}
-                                />
-                                <FormInput 
-                                    value={origin}
-                                    onChange={(e) => setOrigin(e.target.value)}
-                                    placeholder="Enter Origin"
-                                    error={errors.origin}
-                                    disabled={isBusy}
-                                />
-                                <div className="flex flex-row gap-2">
-                                    <Button 
-                                        text={"Save"} 
-                                        ariaLabel={"Save"}
-                                        onButtonClick={save} 
-                                        isButtonDisable={isBusy} 
-                                        isLoading={isSaving} 
-                                        bgColor={"green"}
-                                    />
-                                    <Button 
-                                        text={"Clear"} 
-                                        ariaLabel={"Clear"}
-                                        onButtonClick={clear} 
-                                        isButtonDisable={isBusy}
-                                        bgColor={"red"}
-                                    />
-                                </div>
-                            </form>
-                    </Modal>
+                    <ExportOptionModal 
+                        isOpen={isExportModalOpen}
+                        onClose={() => setIsExportModalOpen(false)}
+                        onExport={handleExport}
+                        isBusy={isBusy}
+                        hasSelectedItems={selectedCount > 0}
+                    />
+                    <Button 
+                        text={"Add Fruit"} 
+                        ariaLabel={"Add Fruit"} 
+                        onButtonClick={handleOpenModal} 
+                        isButtonDisable={isBusy} 
+                    />
                 </div>
-                {filteredFruits.length > 0 ? (
-                    <div>
-                        <Pagination
-                            totalItems={filteredFruits.length}
-                            itemsPerPage={itemsPerPage}
-                            currentPage={currentPage}
-                            onPageChange={setCurrentPage}
-                            isBusy={isBusy}
-                            onOptionChange={handleItemsPerPageChange}
-                        />
-                        <div className="w-full mb-2 flex flex-row justify-between items-center max-[359px]:flex-col-reverse max-[359px]:items-start gap-2">
-                            <div>
-                                <input 
-                                    type="checkbox"
-                                    title={isAnySelected(paginatedFruits) ? "Deselect All" : "Select All"}
-                                    aria-label={isAnySelected(paginatedFruits) ? "Deselect All" : "Select All"}
-                                    checked={isAnySelected(paginatedFruits)}
-                                    disabled={isBusy || !hasSelectableItems}
-                                    onChange={selectAll}
-                                    className={`px-4 w-[50px] rounded ${isBusy ? "opacity-50 !cursor-not-allowed" : "!cursor-pointer"}`} 
-                                />
-                            </div>
-                            <div className="flex flex-row gap-2 max-[359px]:flex-row max-[359px]:w-full max-[359px]:justify-end">
+                <Modal
+                    isOpen={isModalOpen}
+                    isButtonDisable={isSaving}
+                    headline={editId ? 'Edit Fruit' : 'Add New Fruit'}
+                    onClose={handleCloseModal} >
+                        <form
+                            onSubmit={(e) => {
+                            e.preventDefault();
+                            save();
+                            }}
+                            className="flex flex-col gap-2"
+                        >
+                            <FormInput 
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="* Enter Name"
+                                error={errors.name}
+                                disabled={isBusy}
+                            />
+                            <FormInput 
+                                value={color}
+                                onChange={(e) => setColor(e.target.value)}
+                                placeholder="* Enter Color"
+                                error={errors.color}
+                                disabled={isBusy}
+                            />
+                            <FormInput 
+                                value={origin}
+                                onChange={(e) => setOrigin(e.target.value)}
+                                placeholder="Enter Origin"
+                                error={errors.origin}
+                                disabled={isBusy}
+                            />
+                            <div className="flex flex-row gap-2">
                                 <Button 
-                                    text={areAllSelected(fruits) ? "Deselect All" : "Select All"} 
-                                    ariaLabel={areAllSelected(fruits) ? "Deselect All" : "Select All"} 
-                                    onButtonClick={toggleSelectAllGlobal}
+                                    text={"Save"} 
+                                    ariaLabel={"Save"}
+                                    onButtonClick={save} 
+                                    isButtonDisable={isBusy} 
+                                    isLoading={isSaving} 
+                                    bgColor={"green"}
+                                />
+                                <Button 
+                                    text={"Clear"} 
+                                    ariaLabel={"Clear"}
+                                    onButtonClick={clear} 
                                     isButtonDisable={isBusy}
-                                    bgColor={"gray"}
-                                    classList="min-w-[108px]"
-                                />
-                                <Button 
-                                    text={getRemoveButtonText()}
-                                    title={!selectedCount ? 'Select to Remove' : ''}
-                                    ariaLabel={getRemoveButtonText()}
-                                    onButtonClick={() => removeSelected()}
-                                    isButtonDisable={!selectedCount || isBusy}
                                     bgColor={"red"}
-                                    classList="min-w-[155px]"
                                 />
                             </div>
+                        </form>
+                </Modal>
+            </div>
+            {filteredFruits.length > 0 ? (
+                <div>
+                    <Pagination
+                        totalItems={filteredFruits.length}
+                        itemsPerPage={itemsPerPage}
+                        currentPage={currentPage}
+                        onPageChange={setCurrentPage}
+                        isBusy={isBusy}
+                        onOptionChange={handleItemsPerPageChange}
+                    />
+                    <div className="w-full mb-2 flex flex-row justify-between items-center max-[359px]:flex-col-reverse max-[359px]:items-start gap-2">
+                        <div>
+                            <input 
+                                type="checkbox"
+                                title={isAnySelected(paginatedFruits) ? "Deselect All" : "Select All"}
+                                aria-label={isAnySelected(paginatedFruits) ? "Deselect All" : "Select All"}
+                                checked={isAnySelected(paginatedFruits)}
+                                disabled={isBusy || !hasSelectableItems}
+                                onChange={selectAll}
+                                className={`px-4 w-[50px] rounded ${isBusy ? "opacity-50 !cursor-not-allowed" : "!cursor-pointer"}`} 
+                            />
                         </div>
-
-                        <Table
-                            headings={headings}
-                            sortableColumns={sortableColumns}
-                            onSortClick={toggleSortField}
-                            sorts={sorts}
-                            data={paginatedFruits}
-                            renderRow={renderRow}
-                        />
+                        <div className="flex flex-row gap-2 max-[359px]:flex-row max-[359px]:w-full max-[359px]:justify-end">
+                            <Button 
+                                text={areAllSelected(fruits) ? "Deselect All" : "Select All"} 
+                                ariaLabel={areAllSelected(fruits) ? "Deselect All" : "Select All"} 
+                                onButtonClick={toggleSelectAllGlobal}
+                                isButtonDisable={isBusy}
+                                bgColor={"gray"}
+                                classList="min-w-[108px]"
+                            />
+                            <Button 
+                                text={getRemoveButtonText()}
+                                title={!selectedCount ? 'Select to Remove' : ''}
+                                ariaLabel={getRemoveButtonText()}
+                                onButtonClick={() => removeSelected()}
+                                isButtonDisable={!selectedCount || isBusy}
+                                bgColor={"red"}
+                                classList="min-w-[155px]"
+                            />
+                        </div>
                     </div>
-                ) : (
-                    <Nodata />
-                )}
-            </Main>
-        </div>
+
+                    <Table
+                        headings={headings}
+                        sortableColumns={sortableColumns}
+                        onSortClick={toggleSortField}
+                        sorts={sorts}
+                        data={paginatedFruits}
+                        renderRow={renderRow}
+                    />
+                </div>
+            ) : (
+                <Nodata />
+            )}
+        </Layout>
     );
 }
 
-export default AlterData
+export default Fruits
